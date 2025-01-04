@@ -22,8 +22,10 @@ data {
 // accepts two parameters 'mu' and 'sigma'.
 parameters {
   real beta[K,T];
+  real beta0[K];
   real<lower=0> sigma; 
-  real<lower=0> gamma; 
+  real<lower=0> sigmabeta0;
+  real<lower=0, upper=1> gamma; 
   // Standard deviation
 }
 
@@ -34,7 +36,7 @@ model {
   for (t in 1:T){
    for (i in 1:N){
     for (j in 1:K){
-    y[i,j,t] ~ binomial(n[i,t], inv_logit(beta[j,t]));
+    y[i,j,t] ~ binomial(n[i,t], inv_logit(beta0[j] + beta[j,t]));
     } 
   }
 }
@@ -48,11 +50,16 @@ for (t in 2:T){
 
 for (j in 1:K){
   beta[j,1] ~ normal(0, sigma);       // Normal prior on coefficients
+  beta0[j] ~ normal(0, sigmabeta0);
 }
 
-  sigma ~ normal(0, 1);
+
+
+  sigma ~ normal(0, 10);
+  sigmabeta0 ~ normal(0, 10);
+  
   // Half-normal prior
-  gamma ~ normal(0, 1);
+  gamma ~ uniform(0, 1);
 
 
 

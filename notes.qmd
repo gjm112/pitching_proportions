@@ -1,0 +1,24 @@
+---
+title: "Pitching proportion"
+format: html
+editor: visual
+---
+
+## Quarto
+Look at number of pitchers who STARTED a game as a covariate? 
+
+i: team
+k: category
+t: year
+
+$$
+y_{ikt} \sim binomial(n_{it}, p_{kt})\\
+logit(p_{kt}) = \beta_{0k} + \beta_{kt} + b_{ik} + b_{itk}
+$$
+
+
+$$
+y_{ikt} \sim binomial(n_{it}, p_{kt})\\
+logit(p_{kt}) = \beta_{kt} \\
+\beta_{kt} \sim N(\gamma\beta_{k,t-1},\sigma^2)
+$$

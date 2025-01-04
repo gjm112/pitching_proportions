@@ -47,15 +47,14 @@ dt1 <- list(
 
 library(rstan)
 fit2 <- stan(
-  file = "~/stan/pitchingproportion_logisticregression_wtime.stan", 
+  file = "./stan/pitchingproportion_logisticregression_wtime.stan", 
   data = dt1,
   chains = 4,
-  warmup = 2000,
-  iter = 4000,
+  warmup = 1000,
+  iter = 2000,
   cores = 4,
   seed = 740
 )
-
 
 plot(fit2)
 
@@ -67,6 +66,9 @@ names(fit2@sim$samples[[1]])
 hist(fit2@sim$samples[[1]]["gamma"][[1]])
 mean(fit2@sim$samples[[1]]["gamma"][[1]])
 
+mean(fit2@sim$samples[[1]]["sigma"][[1]])
+hist (fit2@sim$samples[[1]]["sigmabeta0"][[1]])
+
 names(fit2@sim$samples[[1]])
 results <- data.frame()
 for (j in 1:K){
@@ -77,4 +79,31 @@ for (j in 1:K){
 }
 
 summ <- results %>% group_by(j, t) %>% summarize(beta = mean(beta)) %>% mutate(cump = exp(beta)/(1+exp(beta))) %>% arrange(t,j) %>% group_by(t) %>% mutate(p = c(head(cump,1),diff(cump)))
-ggplot(aes(x = t + 1990, y = p, color = as.factor(j)), data = summ) + geom_point() + geom_line() + geom_smooth(method = "lm")
+ggplot(aes(x = t + 2000, y = p, color = as.factor(j)), data = summ) + geom_point() + geom_line()
+
+
+names(fit2@sim$samples[[1]])
+results <- data.frame()
+for (j in 1:K){
+    ind <- paste0("beta0[",j,"]")
+    results <- rbind(results,data.frame(j = j,beta = fit2@sim$samples[[1]][[ind]]))
+}
+
+summ <- results %>% group_by(j) %>% summarize(beta = mean(beta)) %>% mutate(cump = exp(beta)/(1+exp(beta))) %>% arrange(j) %>% mutate(p = c(head(cump,1),diff(cump)))
+ggplot(aes(x = j, y = p, color = as.factor(j)), data = summ) + geom_point()
+
+
+
+#With both betas 
+names(fit2@sim$samples[[1]])
+results <- data.frame()
+for (j in 1:K){
+  ind0 <- paste0("beta0[",j,"]")
+  for (t in 1:T){
+    ind <- paste0("beta[",j,",",t,"]")
+    results <- rbind(results,data.frame(j = j, t = t,beta = fit2@sim$samples[[1]][[ind]] + fit2@sim$samples[[1]][[ind0]]))
+  }
+}
+
+summ <- results %>% group_by(j, t) %>% summarize(beta = mean(beta)) %>% mutate(cump = exp(beta)/(1+exp(beta))) %>% arrange(t,j) %>% group_by(t) %>% mutate(p = c(head(cump,1),diff(cump)))
+ggplot(aes(x = t + 2000, y = p, color = as.factor(j)), data = summ) + geom_point() + geom_line()
