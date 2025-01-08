@@ -88,26 +88,3 @@ fit2 <- stan(
   cores = 4,
   seed = 740
 )
-
-
-plot(fit2)
-
-str(fit2)
-
-library(tidybayes)
-
-names(fit2@sim$samples[[1]])
-hist(fit2@sim$samples[[1]]["gamma"][[1]])
-mean(fit2@sim$samples[[1]]["gamma"][[1]])
-
-names(fit2@sim$samples[[1]])
-results <- data.frame()
-for (j in 1:K){
-  for (t in 1:T){
-    ind <- paste0("beta[",j,",",t,"]")
-    results <- rbind(results,data.frame(j = j, t = t,beta = fit2@sim$samples[[1]][[ind]]))
-  }
-}
-
-summ <- results %>% group_by(j, t) %>% summarize(beta = mean(beta)) %>% mutate(cump = exp(beta)/(1+exp(beta))) %>% arrange(t,j) %>% group_by(t) %>% mutate(p = c(head(cump,1),diff(cump)))
-ggplot(aes(x = t + 1990, y = p, color = as.factor(j)), data = summ) + geom_point() + geom_line() + geom_smooth(method = "lm")
