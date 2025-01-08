@@ -51,15 +51,6 @@ team_num <- Pitching |>
   ) |>
   pull(teams)
 
-dat |> 
-  replace(is.na(dat), 0) |>
-  group_by(yearID, franchID) |>
-  summarize(Outs = sum(p1:p15, na.rm=T)) |>
-  pivot_wider(names_from = yearID, values_from = Outs) |>
-  select(-1) |>
-  as.matrix() # This may be n
-
-
 K <- 15
 N <- team_num # This is gonna get funky in the stan file, may want to make it 30 and deal with NAs or 0s
 T <- length(yearID)
@@ -74,10 +65,18 @@ for (t in 1:T){
 
 
 n <- matrix(NA, nrow = 30, ncol = T) ## Need to fill n with the total outs pitched for the top 15 players for each team each season since 1903 (do we want NA or 0 for the teams that did not exist)
-
 for (t in 1:T){
   n[,t] <- y[,K,t]
 }
+
+n <- dat |> 
+  replace(is.na(dat), 0) |>
+  mutate(Outs = rowSums(across(p1:p15))) |>
+  select(franchID, yearID, Outs) |>
+  arrange(yearID, franchID) |>
+  pivot_wider(names_from = yearID, values_from = Outs) |>
+  select(-1) |>
+  as.matrix() # This is correct, but there are column names (idk if that works) and 0's instead of NAs
 
 
 dt1 <- list(
