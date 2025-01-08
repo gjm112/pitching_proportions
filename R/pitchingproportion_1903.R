@@ -40,7 +40,7 @@ yearID <- unique(dt$yearID)
 franchID <- as.character(unique(dt$franchID))
 skeleton <- cross_join(as.data.frame(yearID), as.data.frame(franchID))
 
-dat <- left_join(skeleton, dt, by = c("yearID"))
+dat <- left_join(skeleton, dt, by = c("yearID", "franchID"))
 
 team_num <- Pitching |>
   filter(yearID >= startyear)|>
@@ -51,10 +51,18 @@ team_num <- Pitching |>
   ) |>
   pull(teams)
 
+dat |> 
+  replace(is.na(dat), 0) |>
+  group_by(yearID, franchID) |>
+  summarize(Outs = sum(p1:p15, na.rm=T)) |>
+  pivot_wider(names_from = yearID, values_from = Outs) |>
+  select(-1) |>
+  as.matrix() # This may be n
+
 
 K <- 15
 N <- team_num # This is gonna get funky in the stan file, may want to make it 30 and deal with NAs or 0s
-T <- length(years)
+T <- length(yearID)
 y <- array(NA, dim = c(30,K,T))
 
 for (t in 1:T){
@@ -62,6 +70,8 @@ for (t in 1:T){
   temp <- dat %>% filter(yearID == yyy) %>% select(p1:p15) %>% as.matrix()
   y[,,t] <- t(apply(temp, 1, cumsum))
 }
+
+
 
 n <- matrix(NA, nrow = 30, ncol = T) ## Need to fill n with the total outs pitched for the top 15 players for each team each season since 1903 (do we want NA or 0 for the teams that did not exist)
 
