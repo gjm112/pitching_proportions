@@ -41,6 +41,7 @@ franchID <- as.character(unique(dt$franchID))
 skeleton <- cross_join(as.data.frame(yearID), as.data.frame(franchID))
 
 dat <- left_join(skeleton, dt, by = c("yearID", "franchID"))
+dat[is.na(dat)] <- 0
 
 team_num <- Pitching |>
   filter(yearID >= startyear)|>
@@ -52,7 +53,7 @@ team_num <- Pitching |>
   pull(teams)
 
 K <- 15
-N <- team_num # This is gonna get funky in the stan file, may want to make it 30 and deal with NAs or 0s
+#N <- team_num # This is gonna get funky in the stan file, may want to make it 30 and deal with NAs or 0s
 T <- length(yearID)
 y <- array(NA, dim = c(30,K,T))
 
@@ -69,22 +70,27 @@ for (t in 1:T){
   n[,t] <- y[,K,t]
 }
 
-n <- dat |> 
-  replace(is.na(dat), 0) |>
-  mutate(Outs = rowSums(across(p1:p15))) |>
-  select(franchID, yearID, Outs) |>
-  arrange(yearID, franchID) |>
-  pivot_wider(names_from = yearID, values_from = Outs) |>
-  select(-1) |>
-  as.matrix() # This is correct, but there are column names (idk if that works) and 0's instead of NAs
+ind <- list()
+for (yyy in 1:ncol(n)){
+  ind[[yyy]] <- which(n[,yyy] > 0)
+}
+
+# n <- dat |> 
+#   replace(is.na(dat), 0) |>
+#   mutate(Outs = rowSums(across(p1:p15))) |>
+#   select(franchID, yearID, Outs) |>
+#   arrange(yearID, franchID) |>
+#   pivot_wider(names_from = yearID, values_from = Outs) |>
+#   select(-1) |>
+#   as.matrix() # This is correct, but there are column names (idk if that works) and 0's instead of NAs
 
 
 dt1 <- list(
   K = K, # Number of pitchers = 15
-  N = N, # Number of teams
-  T = T, # Year since 1903 -- THIS NEEDS FIXED SINCE I CHANGED T TO CREATE y
+  T = T, # Year since 1903 
   y = y, # Aggregated list of outs pitched (stick-building)
-  n = n  # Total outs pitched by team by year
+  n = n,  # Total outs pitched by team by year
+  ind = ind 
 )
 
 library(rstan)
