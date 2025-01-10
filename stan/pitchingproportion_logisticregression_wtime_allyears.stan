@@ -11,9 +11,12 @@
 
 // The input data is a vector 'y' of length 'N'.
 data {
-  int<lower=0> N;
   int<lower=0> K;
   int<lower=0> T;
+  int<lower=0> N;
+  int<lower=1> all_ind[N];
+  int<lower=1> ind_start[N];
+  int<lower=1> ind_end[N];
   int<lower=0> y[N,K,T];
   int<lower=0> n[N,T];
 }
@@ -34,9 +37,9 @@ parameters {
 // and standard deviation 'sigma'.
 model {
   for (t in 1:T){
-   for (i in 1:N){
+   for (i in ind_start[t]:ind_end[t]) {
     for (j in 1:K){
-    y[i,j,t] ~ binomial(n[i,t], inv_logit(beta0[j] + beta[j,t]));
+    y[all_ind[i],j,t] ~ binomial(n[all_ind[i],t], inv_logit(beta0[j] + beta[j,t]));
     } 
   }
 }

@@ -84,18 +84,25 @@ for (yyy in 1:ncol(n)){
 #   select(-1) |>
 #   as.matrix() # This is correct, but there are column names (idk if that works) and 0's instead of NAs
 
+all_ind <- unlist(ind)
+ind_start <- cumsum(c(1, sapply(ind, length)[-length(ind)]))
+ind_end <- cumsum(sapply(ind, length))
+
 
 dt1 <- list(
   K = K, # Number of pitchers = 15
   T = T, # Year since 1903 
   y = y, # Aggregated list of outs pitched (stick-building)
   n = n,  # Total outs pitched by team by year
-  ind = ind 
+  N = length(all_ind),
+  all_ind = all_ind,
+  ind_start = ind_start,
+  ind_end = ind_end
 )
 
 library(rstan)
 fit2 <- stan(
-  file = "~/stan/pitchingproportion_logisticregression_wtime.stan", 
+  file = "stan/pitchingproportion_logisticregression_wtime_allyears.stan", 
   data = dt1,
   chains = 4,
   warmup = 2000,
