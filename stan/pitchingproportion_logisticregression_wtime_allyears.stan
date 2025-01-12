@@ -17,8 +17,8 @@ data {
   int<lower=1> all_ind[N];
   int<lower=1> ind_start[T];
   int<lower=1> ind_end[T];
-  int<lower=0> y[N,K,T];
-  int<lower=0> n[N,T];
+  int<lower=0> y[30,K,T];
+  int<lower=0> n[30,T];
 }
 
 // The parameters accepted by the model. Our model
@@ -37,9 +37,10 @@ parameters {
 // and standard deviation 'sigma'.
 model {
   for (t in 1:T){
-   for (i in ind_start[t]:ind_end[t]) { # Check this 
+   for (i in ind_start[t]:ind_end[t]) { # Check this
+    int team_idx = all_ind[i];
     for (j in 1:K){
-    y[all_ind[i],j,t] ~ binomial(n[all_ind[i],t], inv_logit(beta0[j] + beta[j,t])); # Check this
+      y[team_idx,j,t] ~ binomial(n[team_idx,t], inv_logit(beta0[j] + beta[j,t])); # Check this
     } 
   }
 }
